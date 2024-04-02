@@ -87,7 +87,7 @@ def get_image(tiles):
 
 
 
-img1_ns_tiles = get_tiles(img1_ns[0], overlap=True)
+img1_ns_tiles = get_tiles(img1_ns[0], overlap=False)
 print(len(img1_ns_tiles))
 
 N=500
@@ -106,6 +106,8 @@ for i in range(maxiter):
     print("Error is: ",error)
     if (error<500):
         break
+
+######## SBL #######
 
 # Denoise the image
 img1_tiles = get_tiles(img1_ns[0], overlap=False)
