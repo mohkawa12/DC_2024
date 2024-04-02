@@ -72,6 +72,5 @@ ksvd = KSVD()
 A = ksvd.init_dict(100)
 maxiter = 50
 for i in range(maxiter):
-    print(A.shape)
     xK = ksvd.sparse_coding(A, yN, s=50)
     A = ksvd.codebook_update(xK, yN, A)

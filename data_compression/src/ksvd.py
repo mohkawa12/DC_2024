@@ -85,7 +85,7 @@ class KSVD:
 
             # Update dictionary and xk
             A[:,atom_no] = U[:,0]
-            xKR = S[0]*Vh[:,0]
+            xKR = S[0]*Vh[0,:]
             xKR_idx = 0
             for om_idx in om_atom_no:
                 xK[atom_no,om_idx] = xKR[xKR_idx] 
