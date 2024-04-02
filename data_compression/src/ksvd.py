@@ -28,7 +28,6 @@ class KSVD:
             coeffs, score = self.sparse_coding_low(A, yk, method=method, s=s, tol=tol)
             sum_score = sum_score+score
             xs.append(coeffs)
-        print(sum_score/len(ys)) 
         return np.transpose(np.array(xs))
 
     '''
@@ -91,3 +90,11 @@ class KSVD:
                 xK[atom_no,om_idx] = xKR[xKR_idx] 
                 xKR_idx = xKR_idx+1
         return A
+
+    '''
+    Calculate the MSE ||Y-AX||_F
+    '''
+    def convergence_crit(self, yN, A, xK):
+        yN = np.transpose(np.array(yN))
+        error = yN - A@xK
+        return np.linalg.norm(error)

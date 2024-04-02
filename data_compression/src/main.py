@@ -61,8 +61,29 @@ def get_tiles(img):
             all_tiles.append(np.array(tile).ravel(order="F"))
     return all_tiles
 
+'''
+Return an image from the 8x8 tiles
+'''
+def get_image(tiles):
+    img_row = 320
+    img_col = 480
+    img = np.zeros((img_row, img_col))
+    tile_size = 8
+    row_idx = 0
+    col_idx = 0
+    for vector in tiles:
+        block = vector.reshape((tile_size,tile_size), order="F").astype(int)
+        img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
+        col_idx = col_idx+tile_size
+        if col_idx>=img_col:
+            row_idx = row_idx+tile_size
+            col_idx = 0
+    return img.astype(np.uint8)
+
+
+
+
 img1_ns_tiles = get_tiles(img1_ns[0])
-print(len(img1_ns_tiles))
 
 N=500 # TODO should be 6000 once more images are included
 yN = rd.sample(img1_ns_tiles, N)
@@ -74,3 +95,15 @@ maxiter = 50
 for i in range(maxiter):
     xK = ksvd.sparse_coding(A, yN, s=50)
     A = ksvd.codebook_update(xK, yN, A)
+    error = ksvd.convergence_crit(yN, A, xK)
+    print(error)
+    if (error<500):
+        break
+
+# Denoise the image
+xK = ksvd.sparse_coding(A,img1_ns_tiles, s=50)
+img1_dns_tiles = A@xK
+img1_dns = get_image(np.transpose(img1_dns_tiles))
+cv2.imshow("image", img1_dns)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
