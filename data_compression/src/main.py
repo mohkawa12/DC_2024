@@ -46,12 +46,16 @@ img1_ns = add_gauss_noise_set(img1)
 '''
 Split an image into 8x8 tiles, return the tiles as vectorised elements of a list.
 '''
-def get_tiles(img):
+def get_tiles(img, overlap=False):
+    if overlap==True:
+        step = 1
+    else:
+        step = 8
     no_rows, no_cols = img.shape
     tile_size = 8
     all_tiles = []
-    for row_idx in range(0, no_rows, tile_size):
-        for col_idx in range(0, no_cols, tile_size):
+    for row_idx in range(0, no_rows, step):
+        for col_idx in range(0, no_cols, step):
             # Check to make sure we are not out of bounds of the image
             if (row_idx+tile_size>no_rows) or (col_idx+tile_size>no_cols):
                 break
@@ -83,25 +87,29 @@ def get_image(tiles):
 
 
 
-img1_ns_tiles = get_tiles(img1_ns[0])
+img1_ns_tiles = get_tiles(img1_ns[0], overlap=True)
+print(len(img1_ns_tiles))
 
-N=500 # TODO should be 6000 once more images are included
+N=500
 yN = rd.sample(img1_ns_tiles, N)
 
 ######## KSVD #######
 ksvd = KSVD()
-A = ksvd.init_dict(100)
+A = ksvd.init_dict(300)
 maxiter = 50
 for i in range(maxiter):
-    xK = ksvd.sparse_coding(A, yN, s=50)
+    print("Finding sparse representation...")
+    xK = ksvd.sparse_coding(A, yN, s=40)
+    print("Updating dictionary...")
     A = ksvd.codebook_update(xK, yN, A)
     error = ksvd.convergence_crit(yN, A, xK)
-    print(error)
+    print("Error is: ",error)
     if (error<500):
         break
 
 # Denoise the image
-xK = ksvd.sparse_coding(A,img1_ns_tiles, s=50)
+img1_tiles = get_tiles(img1_ns[0], overlap=False)
+xK = ksvd.sparse_coding(A,img1_tiles, s=50)
 img1_dns_tiles = A@xK
 img1_dns = get_image(np.transpose(img1_dns_tiles))
 cv2.imshow("image", img1_dns)
