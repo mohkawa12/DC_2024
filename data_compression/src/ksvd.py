@@ -13,7 +13,9 @@ class KSVD:
     Return a random matrix nxK (used to initialise the dictionary)
     ''' 
     def init_dict(self, K):
-        return np.random.random((8*8, K))
+        A = np.random.random((8*8, K))
+        A_normed = A / np.linalg.norm(A, axis=0)
+        return A_normed
     
     '''
     First step in K-SVD. Given dictionary A and measurements ys, 
@@ -22,18 +24,7 @@ class KSVD:
     be based on the residual error
     '''
     def sparse_coding(self, A, ys, method="omp", s=None, tol=None):
-        xs = []
-        sum_score = 0
-        for yk in ys:
-            coeffs, score = self.sparse_coding_low(A, yk, method=method, s=s, tol=tol)
-            sum_score = sum_score+score
-            xs.append(coeffs)
-        return np.transpose(np.array(xs))
-
-    '''
-    Sparse coding step for a single measurement y
-    '''
-    def sparse_coding_low(self, A, y, method="omp", s=None, tol=None):
+        ys = np.transpose(np.array(ys))
         if method=="omp":
             if (s is not None):
                 omp = OrthogonalMatchingPursuit(n_nonzero_coefs=s)
@@ -41,8 +32,8 @@ class KSVD:
                 omp = OrthogonalMatchingPursuit(tol=tol)
             else:
                 omp = OrthogonalMatchingPursuit()
-            reg = omp.fit(A,y)
-            return np.array(omp.coef_), reg.score(A,y)
+            reg = omp.fit(A,ys)
+            return np.transpose(np.array(omp.coef_)), reg.score(A,ys)
         else:
             print("No other method besides omp is supported")
             return None
