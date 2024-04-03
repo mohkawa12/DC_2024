@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.linear_model import OrthogonalMatchingPursuit
 
 
-def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0005, epsilon2=0.0005):
+def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0006):
 
     num_examples = len(Y)
     # Initialize dictionary and gamma
@@ -19,7 +19,7 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0005, epsilon2=0.0
     while condition1:
         r += 1
         print(r)
-        Sigma = []  # list of N x N matrices
+        Sigma = []  # list of N x N matrices, N: number of atoms
         mu = []  # list of N dimensional vectors
 
         for k, y_k in enumerate(Y):
@@ -27,7 +27,7 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0005, epsilon2=0.0
             gamma_k = np.diag(gamma_current[:, k])
             phi = np.linalg.inv(sigma2*np.eye(tile_size) + A_current @ gamma_k @ A_current.T)
             sigma_k = gamma_k - gamma_k @ A_current.T @ phi @ A_current @ gamma_k
-            mu_k = pow(sigma2, -2)*sigma_k @ A_current.T @ y_k
+            mu_k = pow(sigma2, -2) * sigma_k @ A_current.T @ y_k
 
             Sigma.append(sigma_k)
             mu.append(mu_k)
@@ -64,7 +64,7 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0005, epsilon2=0.0
             else:
                 A_u_current = A_u_new
 
-        if np.linalg.norm(A_new - A_current) + np.sum(np.linalg.norm(gamma_new - gamma_current, ord=2, axis=0)) < epsilon1 or r>9:
+        if np.linalg.norm(A_new - A_current) + np.sum(np.linalg.norm(gamma_new - gamma_current, ord=2, axis=0)) < epsilon1 or r>8:
             condition1 = False
             return mu, A_new
         else:

@@ -91,7 +91,7 @@ def get_image(tiles):
 img1_ns_tiles = get_tiles(img1_ns[0], overlap=False)
 print(len(img1_ns_tiles))
 
-N=2400
+N=500
 yN = rd.sample(img1_ns_tiles, N)
 # ######## KSVD #######
 ksvd = KSVD()
@@ -112,8 +112,8 @@ mu, A = run_sbl_am(sigma2=5, Y=yN, num_atoms=300)
 
 # Denoise the image
 img1_tiles = get_tiles(img1_ns[0], overlap=False)
-# xK = ksvd.sparse_coding(A,img1_tiles, s=50)
-xK = np.array(mu).T
+xK = ksvd.sparse_coding(A,img1_tiles, s=15)
+# xK = np.array(mu).T
 img1_dns_tiles = A@xK
 img1_dns = get_image(np.transpose(img1_dns_tiles))
 cv2.imshow("image", img1_dns)
