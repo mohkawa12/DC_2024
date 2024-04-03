@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import random as rd
 from ksvd import KSVD
+from sbl import run_sbl_am
 
 ####### Import Images #######
 img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
@@ -90,23 +91,24 @@ def get_image(tiles):
 img1_ns_tiles = get_tiles(img1_ns[0], overlap=False)
 print(len(img1_ns_tiles))
 
-N=1000
+N=500
 yN = rd.sample(img1_ns_tiles, N)
-######## KSVD #######
-ksvd = KSVD()
-A = ksvd.init_dict(300)
-maxiter = 25
-for i in range(maxiter):
-    print("Finding sparse representation...")
-    xK = ksvd.sparse_coding(A, yN, s=10)
-    print("Updating dictionary...")
-    A, xK = ksvd.codebook_update(xK, yN, A)
-    error = ksvd.convergence_crit(yN, A, xK)
-    print("Error is: ",error)
-    if (error<500):
-        break
+# ######## KSVD #######
+# ksvd = KSVD()
+# A = ksvd.init_dict(300)
+# maxiter = 25
+# for i in range(maxiter):
+#     print("Finding sparse representation...")
+#     xK = ksvd.sparse_coding(A, yN, s=10)
+#     print("Updating dictionary...")
+#     A, xK = ksvd.codebook_update(xK, yN, A)
+#     error = ksvd.convergence_crit(yN, A, xK)
+#     print("Error is: ",error)
+#     if (error<500):
+#         break
 
 ######## SBL #######
+mu, A = run_sbl_am(sigma2=5, Y=yN, num_atoms=300)
 
 # Denoise the image
 img1_tiles = get_tiles(img1_ns[0], overlap=False)

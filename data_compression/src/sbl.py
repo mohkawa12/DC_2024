@@ -1,35 +1,14 @@
 '''
-Class to execute the SBL algorithm for denoising images.
+Function to execute the SBL algorithm for denoising images.
 '''
 import numpy as np
 from sklearn.linear_model import OrthogonalMatchingPursuit
 
-class SBL:
-    def __init__(self):
-        return
 
-    '''
-    Return a ones-matrix nxK (used to initialise the dictionary)
-    '''
-    # K: dimension of sparse vector x
-    # n: dimension of one example
-    def init_dict(self, K):
-        return np.ones((8*8, K))
-
-    '''
-    Return a ones-matrix KxN (used to initialise the hyperparameter gamma)
-    '''
-    # N: number of examples
-    def init_gamma(self, K, N):
-        return np.ones((K, N))
-
-    '''
-    Return sigma, mu and gamma in the first for-loop in the paper
-    '''
-    def run_sbl_am(self, sigma2, gamma, A, Y, num_atoms, tile_size=64, epsilon1=0.01, epsilon2=0.01):
+def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=1, epsilon2=1):
         # sigma2: variance of noise
         # A: dictionary at current step
-        # gamma: hyperparameter gamma (K x N)
+        # gamma: hyperparameter gamma (K x N):  N=number of examples, K=number of atoms
         # Y: list of N examples
         # r: number of iteration for update
 
@@ -46,7 +25,7 @@ class SBL:
         while np.linalg.norm(A_new - A_current) + np.linalg.norm(gamma_new-gamma_current, ord=2, axis=0) < epsilon1:
             for k, y_k in enumerate(Y):
                 # E-step
-                gamma_k = np.diag(gamma[:, k])
+                gamma_k = np.diag(gamma_current[:, k])
                 phi = np.linalg.inv(sigma2*np.eye(num_atoms) + A_current*gamma_k*(np.transpose(A_current)))
                 sigma_k = gamma_k - gamma_k*np.transpose(A_current)*phi*A_current*gamma_k
                 mu_k = pow(sigma2, -2)*sigma_k*np.transpose(A_current)*y_k
