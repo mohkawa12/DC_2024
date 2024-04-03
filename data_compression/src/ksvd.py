@@ -47,12 +47,9 @@ class KSVD:
         yN = np.transpose(np.array(yN))
         for atom_no in range(0, no_atoms):
             # Find om_atom_no, the set of examples that use the kth atom of A
-            om_atom_no = []
             xk_row = xK[atom_no,:]
-            for example_no in range(0,len(xk_row)):
-                xk = xk_row[example_no]
-                if abs(xk)>0.000000001:
-                    om_atom_no.append(example_no) 
+            om_atom_no = np.nonzero(xk_row)
+            om_atom_no = om_atom_no[0]
             
             # If no example uses this atom, skip it
             if len(om_atom_no)==0:
