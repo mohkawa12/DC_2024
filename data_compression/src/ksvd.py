@@ -3,6 +3,7 @@ Class to execute the K-SVD algorithm for denoising images.
 '''
 import numpy as np
 from sklearn.linear_model import OrthogonalMatchingPursuit
+from tqdm import tqdm
 
 class KSVD:
 
@@ -45,7 +46,7 @@ class KSVD:
     def codebook_update(self, xK, yN, A):
         _, no_atoms = A.shape
         yN = np.transpose(np.array(yN))
-        for atom_no in range(0, no_atoms):
+        for atom_no in tqdm(range(0, no_atoms)):
             # Find om_atom_no, the set of examples that use the kth atom of A
             xk_row = xK[atom_no,:]
             om_atom_no = np.nonzero(xk_row)

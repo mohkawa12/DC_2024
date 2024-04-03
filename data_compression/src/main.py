@@ -68,20 +68,30 @@ def get_tiles(img, overlap=False):
 '''
 Return an image from the 8x8 tiles
 '''
-def get_image(tiles):
+def get_image(tiles, overlap=False):
     img_row = 320
     img_col = 480
     img = np.zeros((img_row, img_col))
     tile_size = 8
     row_idx = 0
     col_idx = 0
-    for vector in tiles:
-        block = vector.reshape((tile_size,tile_size), order="F").astype(int)
-        img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
-        col_idx = col_idx+tile_size
-        if col_idx>=img_col:
-            row_idx = row_idx+tile_size
-            col_idx = 0
+    if overlap==False:
+        for vector in tiles:
+            block = vector.reshape((tile_size,tile_size), order="F").astype(int)
+            img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
+            col_idx = col_idx+tile_size
+            if col_idx>=img_col:
+                row_idx = row_idx+tile_size
+                col_idx = 0
+    else:
+        # TODO this should be different from above, copied just as a placedholder
+        for vector in tiles:
+            block = vector.reshape((tile_size,tile_size), order="F").astype(int)
+            img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
+            col_idx = col_idx+tile_size
+            if col_idx>=img_col:
+                row_idx = row_idx+tile_size
+                col_idx = 0
     return img.astype(np.uint8)
 
 
@@ -90,16 +100,18 @@ def get_image(tiles):
 img1_ns_tiles = get_tiles(img1_ns[0], overlap=True)
 print(len(img1_ns_tiles))
 
-N=500
+N=2000
 yN = rd.sample(img1_ns_tiles, N)
 
 ######## KSVD #######
+s = 50 # assumed sparsity
+tol = 5*5*1.15 # or error tolerance
 ksvd = KSVD()
-A = ksvd.init_dict(300)
+A = ksvd.init_dict(256)
 maxiter = 50
 for i in range(maxiter):
     print("Finding sparse representation...")
-    xK = ksvd.sparse_coding(A, yN, s=40)
+    xK,_ = ksvd.sparse_coding(A, yN, tol=tol)
     print("Updating dictionary...")
     A = ksvd.codebook_update(xK, yN, A)
     error = ksvd.convergence_crit(yN, A, xK)
@@ -108,8 +120,9 @@ for i in range(maxiter):
         break
 
 # Denoise the image
+# TODO overlap should be true but I have not implemented the overlapped image reconstruction yet
 img1_tiles = get_tiles(img1_ns[0], overlap=False)
-xK = ksvd.sparse_coding(A,img1_tiles, s=50)
+xK,_ = ksvd.sparse_coding(A,img1_tiles, tol=tol)
 img1_dns_tiles = A@xK
 img1_dns = get_image(np.transpose(img1_dns_tiles))
 cv2.imshow("image", img1_dns)
