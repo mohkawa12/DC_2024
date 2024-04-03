@@ -90,18 +90,17 @@ def get_image(tiles):
 img1_ns_tiles = get_tiles(img1_ns[0], overlap=False)
 print(len(img1_ns_tiles))
 
-N=500
+N=1000
 yN = rd.sample(img1_ns_tiles, N)
-
 ######## KSVD #######
 ksvd = KSVD()
 A = ksvd.init_dict(300)
-maxiter = 50
+maxiter = 25
 for i in range(maxiter):
     print("Finding sparse representation...")
-    xK = ksvd.sparse_coding(A, yN, s=40)
+    xK = ksvd.sparse_coding(A, yN, s=10)
     print("Updating dictionary...")
-    A = ksvd.codebook_update(xK, yN, A)
+    A, xK = ksvd.codebook_update(xK, yN, A)
     error = ksvd.convergence_crit(yN, A, xK)
     print("Error is: ",error)
     if (error<500):

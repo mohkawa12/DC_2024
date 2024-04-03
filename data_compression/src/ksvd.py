@@ -41,7 +41,7 @@ class KSVD:
                 omp = OrthogonalMatchingPursuit(tol=tol)
             else:
                 omp = OrthogonalMatchingPursuit()
-            reg = omp.fit(A,y)
+            reg = omp.fit(A, y)
             return np.array(omp.coef_), reg.score(A,y)
         else:
             print("No other method besides omp is supported")
@@ -61,19 +61,16 @@ class KSVD:
             for example_no in range(0,len(xk_row)):
                 xk = xk_row[example_no]
                 if abs(xk)>0.000000001:
-                    om_atom_no.append(example_no) 
-            
+                    om_atom_no.append(example_no)
+
             # If no example uses this atom, skip it
             if len(om_atom_no)==0:
                 continue
             
             # Calculate the error matrix
             sum_out = 0
-            for j in range(no_atoms):
-                if j==atom_no:
-                    continue
-                else:
-                    sum_out = sum_out + np.outer(A[:,j],xK[j,:])
+
+            sum_out = np.matmul(np.hstack((A[:,:atom_no], A[:,atom_no+1:])),np.vstack((xK[:atom_no,:], xK[atom_no+1:,:])))
             E_atom_no = yN-sum_out
 
             # Restrict E to only the columns corresponding to omega
@@ -89,7 +86,7 @@ class KSVD:
             for om_idx in om_atom_no:
                 xK[atom_no,om_idx] = xKR[xKR_idx] 
                 xKR_idx = xKR_idx+1
-        return A
+        return A, xK
 
     '''
     Calculate the MSE ||Y-AX||_F
