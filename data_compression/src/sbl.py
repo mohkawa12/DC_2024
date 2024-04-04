@@ -24,8 +24,8 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0
 
         for k, y_k in enumerate(Y):
             # E-step
-            gamma_k = np.diag(gamma_current[:, k])
-            phi = np.linalg.inv(sigma2*np.eye(tile_size) + A_current @ gamma_k @ A_current.T)
+            gamma_k = np.diag(gamma_current[:,k])
+            phi = np.linalg.inv(pow(sigma2, 2)*np.eye(tile_size) + A_current @ gamma_k @ A_current.T)
             sigma_k = gamma_k - gamma_k @ A_current.T @ phi @ A_current @ gamma_k
             mu_k = pow(sigma2, -2) * sigma_k @ A_current.T @ y_k
 
