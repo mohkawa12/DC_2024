@@ -57,12 +57,7 @@ class KSVD:
                 continue
             
             # Calculate the error matrix
-            sum_out = 0
-            for j in range(no_atoms):
-                if j==atom_no:
-                    continue
-                else:
-                    sum_out = sum_out + np.outer(A[:,j],xK[j,:])
+            sum_out = np.hstack((A[:,:atom_no], A[:,atom_no+1:])) @ np.vstack((xK[:atom_no,:], xK[atom_no+1:,:]))
             E_atom_no = yN-sum_out
 
             # Restrict E to only the columns corresponding to omega
