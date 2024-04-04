@@ -48,7 +48,7 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0
                 v1 = 0
                 v2 = 0
                 for j in range(0, i):
-                    v1 += Sigma_tot[i,j]*A_u_current[:,j]
+                    v1 += Sigma_tot[i,j]*A_u_new[:,j]
                 for j in range(i+1, num_atoms):
                     v2 += Sigma_tot[i,j]*A_u_current[:,j]
                 v[:,i] = v[:,i] - v1 - v2
@@ -56,7 +56,7 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0
                 if np.any(v[:,i] != 0):
                     A_u_new[:,i] = v[:,i]/np.linalg.norm(v[:,i])
                 else:
-                    A_u_new[:, i] = A_u_current[:,i]
+                    A_u_new[:,i] = A_u_current[:,i]
 
             if np.linalg.norm(A_u_new - A_u_current) < epsilon2:
                 A_new = A_u_new
