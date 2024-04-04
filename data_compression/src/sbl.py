@@ -64,7 +64,8 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0
             else:
                 A_u_current = A_u_new
 
-        if np.linalg.norm(A_new - A_current) + np.sum(np.linalg.norm(gamma_new - gamma_current, ord=2, axis=0)) < epsilon1 or r>8:
+        print("Condition 1 Error:", np.linalg.norm(A_new - A_current) + np.sum(np.linalg.norm(gamma_new - gamma_current, ord=2, axis=0)))
+        if np.linalg.norm(A_new - A_current) + np.sum(np.linalg.norm(gamma_new - gamma_current, ord=2, axis=0)) < epsilon1:
             condition1 = False
             return mu, A_new
         else:
