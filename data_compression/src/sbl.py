@@ -33,7 +33,7 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0
             mu.append(mu_k)
 
             # M-step pt1
-            gamma_new[:,k] = np.diag(mu_k @ mu_k.T + sigma_k)
+            gamma_new[:,k] = np.diag(np.outer(mu_k, mu_k.T) + sigma_k)
 
         # Update of A
         M = np.array(mu).T
