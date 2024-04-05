@@ -10,6 +10,23 @@ class KSVD:
     def __init__(self):
         return
 
+    def omp(self, A, y, tol):
+        error = tol
+        r = y
+        z = np.zeros(A.shape[1])
+        lambdas = set()
+        while error>=tol:
+            h = A.T@r
+            k = np.argmax(abs(h))
+            lambdas.add(k)
+            Alambda = A[:,list(lambdas)]
+            zlambda = np.linalg.inv(Alambda.T@Alambda)@Alambda.T@y
+            z[list(lambdas)] = zlambda
+            r = y - A@z
+            error = np.linalg.norm(r, ord=2)
+        return z
+
+
     '''
     Return a random matrix nxK (used to initialise the dictionary)
     ''' 
@@ -25,16 +42,13 @@ class KSVD:
     be based on the residual error
     '''
     def sparse_coding(self, A, ys, method="omp", s=None, tol=None):
-        ys = np.transpose(np.array(ys).astype(np.float64))
+        xK = []
         if method=="omp":
-            if (s is not None):
-                omp = OrthogonalMatchingPursuit(n_nonzero_coefs=s)
-            elif (tol is not None):
-                omp = OrthogonalMatchingPursuit(tol=tol)
-            else:
-                omp = OrthogonalMatchingPursuit()
-            reg = omp.fit(A,ys)
-            return np.transpose(np.array(omp.coef_)), reg.score(A,ys)
+            row, col = ys.shape
+            for i in range(col):
+                y = ys[:,i]
+                xK.append(self.omp(A, y, tol))
+            return np.array(xK).T
         else:
             print("No other method besides omp is supported")
             return None

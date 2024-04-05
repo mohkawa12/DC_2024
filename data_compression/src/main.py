@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import random as rd
 from ksvd import KSVD
+from sklearn.linear_model import OrthogonalMatchingPursuit
 
 ####### Import Images #######
 img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
@@ -10,8 +11,6 @@ img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
 # cv2.imshow("image", img1)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
-
-print(img1.shape)
 
 ####### Add Gaussian Noise #######
 '''
@@ -77,10 +76,10 @@ def get_image(tiles, overlap=False):
     col_idx = 0
     if overlap==False:
         for vector in tiles:
-            block = vector.reshape((tile_size,tile_size), order="F").astype(np.uint8)
+            block = vector.reshape((tile_size,tile_size), order="F")
             img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
             col_idx = col_idx+tile_size
-            if col_idx>img_col:
+            if col_idx>=img_col:
                 row_idx = row_idx+tile_size
                 col_idx = 0
     else:
@@ -89,7 +88,7 @@ def get_image(tiles, overlap=False):
         no_tiles = np.zeros((img_row, img_col))
         img = np.zeros((img_row, img_col))
         for vector in tiles:
-            block = vector.reshape((tile_size,tile_size), order="F").astype(np.uint8)
+            block = vector.reshape((tile_size,tile_size), order="F")
             img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] += block
             no_tiles[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] += np.ones((tile_size, tile_size))
             col_idx = col_idx+4
@@ -115,25 +114,25 @@ yN = rd.sample(img1_ns_tiles, N)
 
 ######## KSVD #######
 s = 50 # assumed sparsity
-tol = 5*5*1.15 # or error tolerance
+tol = 1 # or error tolerance
 ksvd = KSVD()
-A = ksvd.init_dict(100)
-maxiter = 10
+A = ksvd.init_dict(200)
+maxiter = 50
 for i in range(maxiter):
     print("Finding sparse representation...")
-    xK,_ = ksvd.sparse_coding(A, yN, tol=tol)
+    xK = ksvd.sparse_coding(A, np.array(yN).T, tol=tol)
     print("Updating dictionary...")
     A = ksvd.codebook_update(xK, yN, A)
     error = ksvd.convergence_crit(yN, A, xK)
     print("Error is: ",error)
-    if (error<500):
+    if (error<20):
         break
 
 # Denoise the image
-img1_tiles = get_tiles(img1_ns[0], overlap=True)
-xK,_ = ksvd.sparse_coding(A,img1_tiles, tol=tol)
+img1_tiles = get_tiles(img1_ns[0], overlap=False)
+xK = ksvd.sparse_coding(A,np.array(img1_tiles).T, tol=tol)
 img1_dns_tiles = A@xK
-img1_dns = get_image(np.transpose(img1_dns_tiles), overlap=True)
+img1_dns = get_image(np.transpose(img1_dns_tiles), overlap=False)
 cv2.imshow("image", img1_dns)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
