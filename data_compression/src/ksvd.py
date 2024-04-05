@@ -53,24 +53,21 @@ class KSVD:
     '''
     def codebook_update(self, xK, yN, A):
         _, no_atoms = A.shape
-        yN = np.transpose(np.array(yN))
-        for atom_no in range(0, no_atoms):
+        yN = np.transpose(np.array(yN).astype(np.float64))
+        skipped_atoms = 0
+        for atom_no in tqdm(range(0, no_atoms)):
             # Find om_atom_no, the set of examples that use the kth atom of A
-            om_atom_no = []
             xk_row = xK[atom_no,:]
-            for example_no in range(0,len(xk_row)):
-                xk = xk_row[example_no]
-                if abs(xk)>0.000000001:
-                    om_atom_no.append(example_no)
+            om_atom_no = np.nonzero(xk_row)
+            om_atom_no = om_atom_no[0]
 
             # If no example uses this atom, skip it
             if len(om_atom_no)==0:
+                skipped_atoms += 1
                 continue
             
             # Calculate the error matrix
-            sum_out = 0
-
-            sum_out = np.matmul(np.hstack((A[:,:atom_no], A[:,atom_no+1:])),np.vstack((xK[:atom_no,:], xK[atom_no+1:,:])))
+            sum_out = np.hstack((A[:,:atom_no], A[:,atom_no+1:])) @ np.vstack((xK[:atom_no,:], xK[atom_no+1:,:]))
             E_atom_no = yN-sum_out
 
             # Restrict E to only the columns corresponding to omega
@@ -86,7 +83,8 @@ class KSVD:
             for om_idx in om_atom_no:
                 xK[atom_no,om_idx] = xKR[xKR_idx] 
                 xKR_idx = xKR_idx+1
-        return A, xK
+        print("Skipped", skipped_atoms, "atoms in dictionary update")
+        return A
 
     '''
     Calculate the MSE ||Y-AX||_F

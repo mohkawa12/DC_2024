@@ -12,8 +12,6 @@ img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
-print(img1.shape)
-
 ####### Add Gaussian Noise #######
 '''
 Add gaussian noise to img with std dev sigma
@@ -49,7 +47,7 @@ Split an image into 8x8 tiles, return the tiles as vectorised elements of a list
 '''
 def get_tiles(img, overlap=False):
     if overlap==True:
-        step = 1
+        step = 4
     else:
         step = 8
     no_rows, no_cols = img.shape
@@ -69,53 +67,75 @@ def get_tiles(img, overlap=False):
 '''
 Return an image from the 8x8 tiles
 '''
-def get_image(tiles):
+def get_image(tiles, overlap=False):
     img_row = 320
     img_col = 480
     img = np.zeros((img_row, img_col))
     tile_size = 8
     row_idx = 0
     col_idx = 0
-    for vector in tiles:
-        block = vector.reshape((tile_size,tile_size), order="F").astype(int)
-        img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
-        col_idx = col_idx+tile_size
-        if col_idx>=img_col:
-            row_idx = row_idx+tile_size
-            col_idx = 0
+    if overlap==False:
+        for vector in tiles:
+            block = vector.reshape((tile_size,tile_size), order="F")
+            img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
+            col_idx = col_idx+tile_size
+            if col_idx>=img_col:
+                row_idx = row_idx+tile_size
+                col_idx = 0
+    else:
+        img_row = 321
+        img_col = 481
+        no_tiles = np.zeros((img_row, img_col))
+        img = np.zeros((img_row, img_col))
+        for vector in tiles:
+            block = vector.reshape((tile_size,tile_size), order="F")
+            img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] += block
+            no_tiles[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] += np.ones((tile_size, tile_size))
+            col_idx = col_idx+4
+            if col_idx+tile_size>img_col:
+                row_idx = row_idx+4
+                col_idx = 0
+        img = img/no_tiles
     return img.astype(np.uint8)
 
 
-
-
-img1_ns_tiles = get_tiles(img1_ns[0], overlap=False)
+img1_ns_tiles = get_tiles(img1_ns[0], overlap=True)
 print(len(img1_ns_tiles))
+
+# For testing reconstruction
+# img1_tiles = get_tiles(img1, overlap=True)
+# img1 = get_image(img1_tiles, overlap=True)
+# cv2.imshow("image", img1)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
 N=500
 yN = rd.sample(img1_ns_tiles, N)
-# ######## KSVD #######
+
+######## KSVD #######
+s = 50 # assumed sparsity
+tol = 1 # or error tolerance
 ksvd = KSVD()
-# A = ksvd.init_dict(300)
-# maxiter = 25
-# for i in range(maxiter):
-#     print("Finding sparse representation...")
-#     xK = ksvd.sparse_coding(A, yN, s=10)
-#     print("Updating dictionary...")
-#     A, xK = ksvd.codebook_update(xK, yN, A)
-#     error = ksvd.convergence_crit(yN, A, xK)
-#     print("Error is: ",error)
-#     if (error<500):
-#         break
+A = ksvd.init_dict(200)
+maxiter = 50
+for i in range(maxiter):
+    print("Finding sparse representation...")
+    xK = ksvd.sparse_coding(A, np.array(yN).T, tol=tol)
+    print("Updating dictionary...")
+    A = ksvd.codebook_update(xK, yN, A)
+    error = ksvd.convergence_crit(yN, A, xK)
+    print("Error is: ",error)
+    if (error<20):
+        break
 
 ######## SBL #######
 mu, A = run_sbl_am(sigma2=5, Y=yN, num_atoms=300)
 
 # Denoise the image
 img1_tiles = get_tiles(img1_ns[0], overlap=False)
-xK = ksvd.sparse_coding(A,img1_tiles, s=15)
-# xK = np.array(mu).T
+xK = ksvd.sparse_coding(A,np.array(img1_tiles).T, tol=tol)
 img1_dns_tiles = A@xK
-img1_dns = get_image(np.transpose(img1_dns_tiles))
+img1_dns = get_image(np.transpose(img1_dns_tiles), overlap=False)
 cv2.imshow("image", img1_dns)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
