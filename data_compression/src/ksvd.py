@@ -46,6 +46,7 @@ class KSVD:
     def codebook_update(self, xK, yN, A):
         _, no_atoms = A.shape
         yN = np.transpose(np.array(yN).astype(np.float64))
+        skipped_atoms = 0
         for atom_no in tqdm(range(0, no_atoms)):
             # Find om_atom_no, the set of examples that use the kth atom of A
             xk_row = xK[atom_no,:]
@@ -54,6 +55,7 @@ class KSVD:
             
             # If no example uses this atom, skip it
             if len(om_atom_no)==0:
+                skipped_atoms += 1
                 continue
             
             # Calculate the error matrix
@@ -73,6 +75,7 @@ class KSVD:
             for om_idx in om_atom_no:
                 xK[atom_no,om_idx] = xKR[xKR_idx] 
                 xKR_idx = xKR_idx+1
+        print("Skipped", skipped_atoms, "atoms in dictionary update")
         return A
 
     '''
