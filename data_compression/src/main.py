@@ -48,7 +48,7 @@ Split an image into 8x8 tiles, return the tiles as vectorised elements of a list
 '''
 def get_tiles(img, overlap=False):
     if overlap==True:
-        step = 1
+        step = 4
     else:
         step = 8
     no_rows, no_cols = img.shape
@@ -77,38 +77,48 @@ def get_image(tiles, overlap=False):
     col_idx = 0
     if overlap==False:
         for vector in tiles:
-            block = vector.reshape((tile_size,tile_size), order="F").astype(int)
+            block = vector.reshape((tile_size,tile_size), order="F").astype(np.uint8)
             img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
             col_idx = col_idx+tile_size
-            if col_idx>=img_col:
+            if col_idx>img_col:
                 row_idx = row_idx+tile_size
                 col_idx = 0
     else:
-        # TODO this should be different from above, copied just as a placedholder
+        img_row = 321
+        img_col = 481
+        no_tiles = np.zeros((img_row, img_col))
+        img = np.zeros((img_row, img_col))
         for vector in tiles:
-            block = vector.reshape((tile_size,tile_size), order="F").astype(int)
-            img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] = block
-            col_idx = col_idx+tile_size
-            if col_idx>=img_col:
-                row_idx = row_idx+tile_size
+            block = vector.reshape((tile_size,tile_size), order="F").astype(np.uint8)
+            img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] += block
+            no_tiles[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] += np.ones((tile_size, tile_size))
+            col_idx = col_idx+4
+            if col_idx+tile_size>img_col:
+                row_idx = row_idx+4
                 col_idx = 0
+        img = img/no_tiles
     return img.astype(np.uint8)
-
-
 
 
 img1_ns_tiles = get_tiles(img1_ns[0], overlap=True)
 print(len(img1_ns_tiles))
 
-N=2000
+# For testing reconstruction
+# img1_tiles = get_tiles(img1, overlap=True)
+# img1 = get_image(img1_tiles, overlap=True)
+# cv2.imshow("image", img1)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+N=500
 yN = rd.sample(img1_ns_tiles, N)
 
 ######## KSVD #######
 s = 50 # assumed sparsity
 tol = 5*5*1.15 # or error tolerance
 ksvd = KSVD()
-A = ksvd.init_dict(256)
-maxiter = 50
+A = ksvd.init_dict(100)
+maxiter = 10
 for i in range(maxiter):
     print("Finding sparse representation...")
     xK,_ = ksvd.sparse_coding(A, yN, tol=tol)
@@ -120,11 +130,10 @@ for i in range(maxiter):
         break
 
 # Denoise the image
-# TODO overlap should be true but I have not implemented the overlapped image reconstruction yet
-img1_tiles = get_tiles(img1_ns[0], overlap=False)
+img1_tiles = get_tiles(img1_ns[0], overlap=True)
 xK,_ = ksvd.sparse_coding(A,img1_tiles, tol=tol)
 img1_dns_tiles = A@xK
-img1_dns = get_image(np.transpose(img1_dns_tiles))
+img1_dns = get_image(np.transpose(img1_dns_tiles), overlap=True)
 cv2.imshow("image", img1_dns)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
