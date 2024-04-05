@@ -25,7 +25,7 @@ class KSVD:
     be based on the residual error
     '''
     def sparse_coding(self, A, ys, method="omp", s=None, tol=None):
-        ys = np.transpose(np.array(ys))
+        ys = np.transpose(np.array(ys).astype(np.float64))
         if method=="omp":
             if (s is not None):
                 omp = OrthogonalMatchingPursuit(n_nonzero_coefs=s)
@@ -45,7 +45,7 @@ class KSVD:
     '''
     def codebook_update(self, xK, yN, A):
         _, no_atoms = A.shape
-        yN = np.transpose(np.array(yN))
+        yN = np.transpose(np.array(yN).astype(np.float64))
         for atom_no in tqdm(range(0, no_atoms)):
             # Find om_atom_no, the set of examples that use the kth atom of A
             xk_row = xK[atom_no,:]
