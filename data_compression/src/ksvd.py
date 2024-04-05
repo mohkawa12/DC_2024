@@ -3,17 +3,37 @@ Class to execute the K-SVD algorithm for denoising images.
 '''
 import numpy as np
 from sklearn.linear_model import OrthogonalMatchingPursuit
+from tqdm import tqdm
 
 class KSVD:
 
     def __init__(self):
         return
 
+    def omp(self, A, y, tol):
+        error = tol
+        r = y
+        z = np.zeros(A.shape[1])
+        lambdas = set()
+        while error>=tol:
+            h = A.T@r
+            k = np.argmax(abs(h))
+            lambdas.add(k)
+            Alambda = A[:,list(lambdas)]
+            zlambda = np.linalg.inv(Alambda.T@Alambda)@Alambda.T@y
+            z[list(lambdas)] = zlambda
+            r = y - A@z
+            error = np.linalg.norm(r, ord=2)
+        return z
+
+
     '''
     Return a random matrix nxK (used to initialise the dictionary)
     ''' 
     def init_dict(self, K):
-        return np.random.random((8*8, K))
+        A = np.random.random((8*8, K))
+        A_normed = A / np.linalg.norm(A, axis=0)
+        return A_normed
     
     '''
     First step in K-SVD. Given dictionary A and measurements ys, 
@@ -22,27 +42,13 @@ class KSVD:
     be based on the residual error
     '''
     def sparse_coding(self, A, ys, method="omp", s=None, tol=None):
-        xs = []
-        sum_score = 0
-        for yk in ys:
-            coeffs, score = self.sparse_coding_low(A, yk, method=method, s=s, tol=tol)
-            sum_score = sum_score+score
-            xs.append(coeffs)
-        return np.transpose(np.array(xs))
-
-    '''
-    Sparse coding step for a single measurement y
-    '''
-    def sparse_coding_low(self, A, y, method="omp", s=None, tol=None):
+        xK = []
         if method=="omp":
-            if (s is not None):
-                omp = OrthogonalMatchingPursuit(n_nonzero_coefs=s)
-            elif (tol is not None):
-                omp = OrthogonalMatchingPursuit(tol=tol)
-            else:
-                omp = OrthogonalMatchingPursuit()
-            reg = omp.fit(A, y)
-            return np.array(omp.coef_), reg.score(A,y)
+            row, col = ys.shape
+            for i in range(col):
+                y = ys[:,i]
+                xK.append(self.omp(A, y, tol))
+            return np.array(xK).T
         else:
             print("No other method besides omp is supported")
             return None
@@ -60,7 +66,7 @@ class KSVD:
             xk_row = xK[atom_no,:]
             om_atom_no = np.nonzero(xk_row)
             om_atom_no = om_atom_no[0]
-
+            
             # If no example uses this atom, skip it
             if len(om_atom_no)==0:
                 skipped_atoms += 1
