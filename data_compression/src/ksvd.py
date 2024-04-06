@@ -10,20 +10,37 @@ class KSVD:
     def __init__(self):
         return
 
-    def omp(self, A, y, tol):
-        error = tol
-        r = y
-        z = np.zeros(A.shape[1])
-        lambdas = set()
-        while error>=tol:
-            h = A.T@r
-            k = np.argmax(abs(h))
-            lambdas.add(k)
-            Alambda = A[:,list(lambdas)]
-            zlambda = np.linalg.inv(Alambda.T@Alambda)@Alambda.T@y
-            z[list(lambdas)] = zlambda
-            r = y - A@z
-            error = np.linalg.norm(r, ord=2)
+    def omp(self, A, y, tol=None, s=None):
+        if tol is not None:
+            error = len(y)*tol
+            r = y
+            z = np.zeros(A.shape[1])
+            lambdas = set()
+            while error>=np.sqrt(len(y))*tol:
+                h = A.T@r
+                k = np.argmax(abs(h))
+                lambdas.add(k)
+                Alambda = A[:,list(lambdas)]
+                zlambda = np.linalg.inv(Alambda.T@Alambda)@Alambda.T@y
+                z[list(lambdas)] = zlambda
+                r = y - A@z
+                error = np.linalg.norm(r, ord=2)
+        elif s is not None:
+            r = y
+            z = np.zeros(A.shape[1])
+            lambdas = set()
+            for i in range(s):
+                h = A.T@r
+                k = np.argmax(abs(h))
+                lambdas.add(k)
+                Alambda = A[:,list(lambdas)]
+                zlambda = np.linalg.inv(Alambda.T@Alambda)@Alambda.T@y
+                z[list(lambdas)] = zlambda
+                r = y - A@z
+                error = np.linalg.norm(r, ord=2)
+        else:
+            print("Please specify error tolerance or sparsity level.")
+            z = -1
         return z
 
 
@@ -43,11 +60,16 @@ class KSVD:
     '''
     def sparse_coding(self, A, ys, method="omp", s=None, tol=None):
         xK = []
+        avg_sparsity = 0
         if method=="omp":
             row, col = ys.shape
             for i in range(col):
                 y = ys[:,i]
-                xK.append(self.omp(A, y, tol))
+                xk = self.omp(A, y, s=s, tol=tol)
+                avg_sparsity += len(np.nonzero(xk)[0])
+                xK.append(xk)
+            avg_sparsity /= col
+            print("Average sparsity", avg_sparsity)
             return np.array(xK).T
         else:
             print("No other method besides omp is supported")
@@ -59,7 +81,7 @@ class KSVD:
     '''
     def codebook_update(self, xK, yN, A):
         _, no_atoms = A.shape
-        yN = np.transpose(np.array(yN).astype(np.float64))
+        yN = np.transpose(np.array(yN))
         skipped_atoms = 0
         for atom_no in tqdm(range(0, no_atoms)):
             # Find om_atom_no, the set of examples that use the kth atom of A
@@ -98,4 +120,4 @@ class KSVD:
     def convergence_crit(self, yN, A, xK):
         yN = np.transpose(np.array(yN))
         error = yN - A@xK
-        return np.linalg.norm(error)
+        return np.linalg.norm(error)**2
