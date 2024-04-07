@@ -47,7 +47,7 @@ Split an image into 8x8 tiles, return the tiles as vectorised elements of a list
 '''
 def get_tiles(img, overlap=False):
     if overlap==True:
-        step = 4
+        step = 1
     else:
         step = 8
     no_rows, no_cols = img.shape
@@ -91,15 +91,21 @@ def get_image(tiles, overlap=False):
             block = vector.reshape((tile_size,tile_size), order="F")
             img[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] += block
             no_tiles[row_idx:row_idx+tile_size, col_idx:col_idx+tile_size] += np.ones((tile_size, tile_size))
-            col_idx = col_idx+4
+            col_idx = col_idx+1
             if col_idx+tile_size>img_col:
-                row_idx = row_idx+4
+                row_idx = row_idx+1
                 col_idx = 0
         img = img/no_tiles
     return img.astype(np.uint8)
 
+def image_error(orig_img, new_img):
+    # TODO decide on an error measurement
+    error = np.linalg.norm(new_img-orig_img)**2
+    return error
 
-img1_ns_tiles = get_tiles(img1_ns[0], overlap=True)
+
+
+img1_ns_tiles = get_tiles(img1_ns[2], overlap=True)
 print(len(img1_ns_tiles))
 
 # For testing reconstruction
@@ -109,30 +115,37 @@ print(len(img1_ns_tiles))
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
-N=500
+N=6000
 yN = rd.sample(img1_ns_tiles, N)
 
 ######## KSVD #######
-s = 50 # assumed sparsity
-tol = 1 # or error tolerance
+tol = 15 # or error tolerance
+init_dict_size = 500
 ksvd = KSVD()
-A = ksvd.init_dict(200)
-maxiter = 50
+A = ksvd.init_dict(init_dict_size)
+maxiter =100
+old_avg_sparsity = init_dict_size # Initialise with full vector sparsity
 for i in range(maxiter):
     print("Finding sparse representation...")
-    xK = ksvd.sparse_coding(A, np.array(yN).T, tol=tol)
+    xK, new_avg_sparsity = ksvd.sparse_coding(A, np.array(yN).T, tol=tol)
     print("Updating dictionary...")
     A = ksvd.codebook_update(xK, yN, A)
     error = ksvd.convergence_crit(yN, A, xK)
-    print("Error is: ",error)
-    if (error<20):
+    # print("Error after dictionary update is: ",error)
+    if (abs(old_avg_sparsity-new_avg_sparsity)<0.01):
+        print("Sparsity level converged.")
         break
+    old_avg_sparsity = new_avg_sparsity
 
 # Denoise the image
-img1_tiles = get_tiles(img1_ns[0], overlap=False)
-xK = ksvd.sparse_coding(A,np.array(img1_tiles).T, tol=tol)
+img1_tiles = get_tiles(img1_ns[2], overlap=True)
+xK,_ = ksvd.sparse_coding(A,np.array(img1_tiles).T, tol=tol)
 img1_dns_tiles = A@xK
-img1_dns = get_image(np.transpose(img1_dns_tiles), overlap=False)
-cv2.imshow("image", img1_dns)
+img1_dns = get_image(np.transpose(img1_dns_tiles), overlap=True)
+img1_concat = np.concatenate((img1, img1_ns[2], img1_dns), axis=1)
+cv2.imshow("image", img1_concat)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+# Error
+print(image_error(img1, img1_dns))

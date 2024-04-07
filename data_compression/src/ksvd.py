@@ -54,9 +54,8 @@ class KSVD:
     
     '''
     First step in K-SVD. Given dictionary A and measurements ys, 
-    find the sparse vectors xs. Termination of the algorithm is by default
-    based on the number of non-zero entries in the solution, but can also 
-    be based on the residual error
+    find the sparse vectors xs. Termination of the algorithm can be based
+    on sparsity level or residual error tolerance
     '''
     def sparse_coding(self, A, ys, method="omp", s=None, tol=None):
         xK = []
@@ -70,7 +69,7 @@ class KSVD:
                 xK.append(xk)
             avg_sparsity /= col
             print("Average sparsity", avg_sparsity)
-            return np.array(xK).T
+            return np.array(xK).T, avg_sparsity
         else:
             print("No other method besides omp is supported")
             return None
