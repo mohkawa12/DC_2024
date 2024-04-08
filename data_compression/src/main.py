@@ -99,13 +99,12 @@ def get_image(tiles, overlap=False):
     return img.astype(np.uint8)
 
 def image_error(orig_img, new_img):
-    # TODO decide on an error measurement
-    error = np.linalg.norm(new_img-orig_img)**2
+    error = np.linalg.norm(new_img-orig_img)/(481*321)
     return error
 
 
 
-img1_ns_tiles = get_tiles(img1_ns[2], overlap=True)
+img1_ns_tiles = get_tiles(img1_ns[3], overlap=True)
 print(len(img1_ns_tiles))
 
 # For testing reconstruction
@@ -119,8 +118,8 @@ N=6000
 yN = rd.sample(img1_ns_tiles, N)
 
 ######## KSVD #######
-tol = 15 # or error tolerance
-init_dict_size = 500
+tol = 25 # or error tolerance
+init_dict_size = 300
 ksvd = KSVD()
 A = ksvd.init_dict(init_dict_size)
 maxiter =100
@@ -138,11 +137,11 @@ for i in range(maxiter):
     old_avg_sparsity = new_avg_sparsity
 
 # Denoise the image
-img1_tiles = get_tiles(img1_ns[2], overlap=True)
+img1_tiles = get_tiles(img1_ns[3], overlap=True)
 xK,_ = ksvd.sparse_coding(A,np.array(img1_tiles).T, tol=tol)
 img1_dns_tiles = A@xK
 img1_dns = get_image(np.transpose(img1_dns_tiles), overlap=True)
-img1_concat = np.concatenate((img1, img1_ns[2], img1_dns), axis=1)
+img1_concat = np.concatenate((img1, img1_ns[3], img1_dns), axis=1)
 cv2.imshow("image", img1_concat)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
