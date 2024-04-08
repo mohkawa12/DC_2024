@@ -19,7 +19,7 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0
 
     while condition1:
         r += 1
-        print(r)
+        print("Iteration number:", r)
         Sigma = []  # list of N x N matrices, N: number of atoms
         mu = []  # list of N dimensional vectors
 
