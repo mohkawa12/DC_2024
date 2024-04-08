@@ -8,7 +8,7 @@ from sklearn.linear_model import OrthogonalMatchingPursuit
 def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0006):
 
     num_examples = len(Y)
-    maxiter = 50
+    maxiter = 20
     # Initialize dictionary and gamma
     gamma_current = np.ones([num_atoms, num_examples])
     A_current = np.ones([tile_size, num_atoms])
