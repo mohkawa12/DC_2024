@@ -110,7 +110,7 @@ class KSVD:
             for om_idx in om_atom_no:
                 xK[atom_no,om_idx] = xKR[xKR_idx] 
                 xKR_idx = xKR_idx+1
-        print("Skipped", skipped_atoms, "atoms in dictionary update")
+        # print("Skipped", skipped_atoms, "atoms in dictionary update")
         return A
 
     '''
