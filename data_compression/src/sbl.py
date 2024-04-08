@@ -69,8 +69,8 @@ def run_sbl_am(sigma2, Y, num_atoms, tile_size=64, epsilon1=0.0006, epsilon2=0.0
             condition1 = False
             return mu, A_new
         else:
-            A_current = A_new
-            gamma_current = gamma_new
+            A_current = np.copy(A_new)
+            gamma_current = np.copy(gamma_new)
 
 
 
