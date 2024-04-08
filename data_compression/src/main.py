@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import random as rd
 from ksvd import KSVD
-from sklearn.linear_model import OrthogonalMatchingPursuit
+from sbl import run_sbl_am
 
 ####### Import Images #######
 img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
@@ -135,6 +135,9 @@ for i in range(maxiter):
         print("Sparsity level converged.")
         break
     old_avg_sparsity = new_avg_sparsity
+
+######## SBL #######
+mu, A = run_sbl_am(sigma2=5, Y=yN, num_atoms=300)
 
 # Denoise the image
 img1_tiles = get_tiles(img1_ns[3], overlap=True)
