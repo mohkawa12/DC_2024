@@ -6,9 +6,9 @@ from sbl import run_sbl_am
 import time
 
 ####### Configuration #######
-RUN_SBL = False
-RUN_KSVD = True
-LEARN_DICT = False
+RUN_SBL = True
+RUN_KSVD = False
+LEARN_DICT = True
 noise_std_devs = [15]
 
 ####### Import Images #######
@@ -165,6 +165,9 @@ if LEARN_DICT:
             run_time = time.time()-start_time
             run_times.append(run_time)
         As.append(A)
+    runtime_filename = "../data/cute_bear_"+method+"_rt.npy"
+    with open(runtime_filename, 'wb') as f:
+        np.save(f, run_times)
 else:
     if RUN_KSVD:
         method = "ksvd"
@@ -202,7 +205,3 @@ for idx, img1_noisy in enumerate(img1_ns):
 error_filename = "../data/cute_bear_"+method+"_errors.npy"
 with open(error_filename, 'wb') as f:
     np.save(f, image_errors)
-
-runtime_filename = "../data/cute_bear_"+method+"_rt.npy"
-with open(runtime_filename, 'wb') as f:
-    np.save(f, run_times)
