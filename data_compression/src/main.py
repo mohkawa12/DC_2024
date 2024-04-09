@@ -6,10 +6,10 @@ from sbl import run_sbl_am
 import time
 
 ####### Configuration #######
-RUN_SBL = True
-RUN_KSVD = False
+RUN_SBL = False
+RUN_KSVD = True
 LEARN_DICT = True
-noise_std_devs = [25]
+noise_std_devs = [10]
 
 ####### Import Images #######
 img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
@@ -92,8 +92,8 @@ def get_image(tiles, overlap=False):
                 row_idx = row_idx+tile_size
                 col_idx = 0
     else:
-        img_row = 321
-        img_col = 481
+        img_row = 320
+        img_col = 480
         no_tiles = np.zeros((img_row, img_col))
         img = np.zeros((img_row, img_col))
         for vector in tiles:
@@ -108,7 +108,9 @@ def get_image(tiles, overlap=False):
     return img.astype(np.uint8)
 
 def image_error(orig_img, new_img):
-    error = np.linalg.norm(new_img-orig_img)/(481*321)
+    row, col = new_img.shape
+    orig_img = orig_img[:row,:col] 
+    error = np.linalg.norm(new_img-orig_img)/(row*col)
     return error
 
 
@@ -131,7 +133,7 @@ if LEARN_DICT:
     # List of learned dictionaries
     As = []
     run_times = []
-    dict_size = 300
+    dict_size = 200
     if RUN_KSVD:
     ######## KSVD #######
         for idx,yN in enumerate(yNs):
@@ -173,18 +175,18 @@ else:
         dict_filename = "../data/cute_bear_dict_"+method+str(tol)+".npy"
         with open(dict_filename, 'rb') as f:
             A = np.load(f)
-            print("Hey",A.shape)
         As.append(A)
 
 # Denoise the images using the learned dictionary
 image_errors = []
+print("Denonising images...")
 if RUN_KSVD:
     method = "ksvd"
 elif RUN_SBL:
     method = "sbl"
     ksvd = KSVD()
 for idx, img1_noisy in enumerate(img1_ns):
-    tol = noise_std_devs[idx]
+    tol = noise_std_devs[idx] 
     img1_tiles = get_tiles(img1_noisy, overlap=True)
     xK,_ = ksvd.sparse_coding(As[idx],np.array(img1_tiles).T, tol=tol)
     img1_dns_tiles = As[idx]@xK
