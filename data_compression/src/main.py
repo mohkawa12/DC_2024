@@ -6,10 +6,10 @@ from sbl import run_sbl_am
 import time
 
 ####### Configuration #######
-RUN_SBL = True
-RUN_KSVD = False
+RUN_SBL = False
+RUN_KSVD = True
 LEARN_DICT = True
-noise_std_devs = [15]
+noise_std_devs = [5, 10, 15, 25]
 
 ####### Import Images #######
 img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
@@ -133,9 +133,10 @@ if LEARN_DICT:
     # List of learned dictionaries
     As = []
     run_times = []
-    dict_size = 300
+    dict_size = 250
     if RUN_KSVD:
     ######## KSVD #######
+        method = "ksvd"
         for idx,yN in enumerate(yNs):
             start_time = time.time()
             tol = noise_std_devs[idx]  # or error tolerance
@@ -159,6 +160,7 @@ if LEARN_DICT:
             run_times.append(run_time)
     elif RUN_SBL:
     ######## SBL #######
+        method = "sbl"
         for idx,yN in enumerate(yNs):
             start_time = time.time()
             mu, A = run_sbl_am(sigma2=noise_std_devs[idx], Y=yN, num_atoms=dict_size)

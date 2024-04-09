@@ -36,18 +36,17 @@ fig2, ax2 = plt.subplots()
 ax2.plot(noise_std_devs, rt_ksvd, marker="*")
 ax2.plot(noise_std_devs, rt_sbl, marker="*")
 ax2.legend(["KSVD", "SBL"])
-ax2.set_title("Algorithm Runtime Error")
+ax2.set_title("Algorithm Runtime")
 ax2.set_ylabel("time [s]")
 ax2.set_ylabel("noise standard deviation")
 
 ##### Print dictionary #####
-method = "sbl"
-tol = "25"
+method = "ksvd"
+tol = "15"
 dict_filename = "../data/cute_bear_dict_"+method+tol+".npy"
 with open(dict_filename, 'rb') as f:
     A = np.load(f)
 img_row = int(A.shape[1]/25*8)
-print(img_row)
 img_col = 200
 img = np.zeros((img_row, img_col))
 tile_size = 8
@@ -60,12 +59,17 @@ for vector in A.T:
     if col_idx>=img_col:
         row_idx = row_idx+tile_size
         col_idx = 0
-max_value = np.max(img)
+min_value = np.min(img)
+img = img-min_value
+max_value = np.max(abs(img))
 img /= max_value
 img *=255
-img = img.astype(np.uint8)
+img = np.clip(img, 0, 255).astype(np.uint8)
 
 dict_filename = "../data/cute_bear_dict_"+method+tol+".jpg"
 cv2.imwrite(dict_filename, img)
+cv2.imshow("image", img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-plt.show()
+# plt.show()
