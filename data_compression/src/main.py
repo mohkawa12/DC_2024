@@ -8,8 +8,8 @@ import time
 ####### Configuration #######
 RUN_SBL = False
 RUN_KSVD = True
-LEARN_DICT = True
-noise_std_devs = [10]
+LEARN_DICT = False
+noise_std_devs = [15]
 
 ####### Import Images #######
 img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
@@ -105,7 +105,7 @@ def get_image(tiles, overlap=False):
                 row_idx = row_idx+2
                 col_idx = 0
         img = img/no_tiles
-    return img.astype(np.uint8)
+    return np.clip(img, 0, 255).astype(np.uint8)
 
 def image_error(orig_img, new_img):
     row, col = new_img.shape
@@ -133,7 +133,7 @@ if LEARN_DICT:
     # List of learned dictionaries
     As = []
     run_times = []
-    dict_size = 200
+    dict_size = 300
     if RUN_KSVD:
     ######## KSVD #######
         for idx,yN in enumerate(yNs):
@@ -180,11 +180,11 @@ else:
 # Denoise the images using the learned dictionary
 image_errors = []
 print("Denonising images...")
+ksvd = KSVD()
 if RUN_KSVD:
     method = "ksvd"
 elif RUN_SBL:
     method = "sbl"
-    ksvd = KSVD()
 for idx, img1_noisy in enumerate(img1_ns):
     tol = noise_std_devs[idx] 
     img1_tiles = get_tiles(img1_noisy, overlap=True)

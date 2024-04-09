@@ -13,7 +13,7 @@ class KSVD:
     def omp(self, A, y, tol=None, s=None):
         if tol is not None:
             error = len(y)*tol
-            r = y
+            r = y.astype(np.float64)
             z = np.zeros(A.shape[1])
             lambdas = set()
             while error>=np.sqrt(len(y))*tol:
@@ -80,7 +80,7 @@ class KSVD:
     '''
     def codebook_update(self, xK, yN, A):
         _, no_atoms = A.shape
-        yN = np.transpose(np.array(yN))
+        yN = np.transpose(np.array(yN).astype(np.float64))
         skipped_atoms = 0
         for atom_no in tqdm(range(0, no_atoms)):
             # Find om_atom_no, the set of examples that use the kth atom of A
