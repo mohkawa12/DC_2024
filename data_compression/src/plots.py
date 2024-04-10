@@ -8,34 +8,34 @@ import cv2
 
 noise_std_devs = np.array([5, 10, 15, 25])
 ##### Reconstruction Error Plots #####
+# This is not a good measure of image reconstruction
+# def image_error(orig_img, new_img):
+#     row, col = new_img.shape
+#     orig_img = orig_img[:row,:col] 
+#     error = np.linalg.norm(new_img-orig_img)/(row*col)
+#     return error
 
-def image_error(orig_img, new_img):
-    row, col = new_img.shape
-    orig_img = orig_img[:row,:col] 
-    error = np.linalg.norm(new_img-orig_img)/(row*col)
-    return error
+# row = 320
+# col = 480
+# original_img = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
+# original_img = original_img[:row,:col]
+# errors_ksvd = []
+# errors_sbl = []
+# for noise_level in noise_std_devs:
+#     ksvdimg_filename = "../data/cute_bear_ksvd"+str(noise_level)+".jpg"
+#     sblimg_filename = "../data/cute_bear_sbl"+str(noise_level)+".jpg"
+#     ksvddns_img = cv2.imread(ksvdimg_filename, cv2.IMREAD_GRAYSCALE)
+#     sbldns_img = cv2.imread(sblimg_filename, cv2.IMREAD_GRAYSCALE)
+#     errors_ksvd.append(image_error(original_img, ksvddns_img))
+#     errors_sbl.append(image_error(original_img, sbldns_img))
 
-row = 320
-col = 480
-original_img = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
-original_img = original_img[:row,:col]
-errors_ksvd = []
-errors_sbl = []
-for noise_level in noise_std_devs:
-    ksvdimg_filename = "../data/cute_bear_ksvd"+str(noise_level)+".jpg"
-    sblimg_filename = "../data/cute_bear_sbl"+str(noise_level)+".jpg"
-    ksvddns_img = cv2.imread(ksvdimg_filename, cv2.IMREAD_GRAYSCALE)
-    sbldns_img = cv2.imread(sblimg_filename, cv2.IMREAD_GRAYSCALE)
-    errors_ksvd.append(image_error(original_img, ksvddns_img))
-    errors_sbl.append(image_error(original_img, sbldns_img))
-
-fig1, ax1 = plt.subplots()
-ax1.plot(noise_std_devs, errors_ksvd, marker="*")
-ax1.plot(noise_std_devs, errors_sbl, marker="*")
-ax1.legend(["KSVD", "SBL"])
-ax1.set_title("Image Reconstruction Error")
-ax1.set_xlabel("noise standard deviation")
-ax1.grid()
+# fig1, ax1 = plt.subplots()
+# ax1.plot(noise_std_devs, errors_ksvd, marker="*")
+# ax1.plot(noise_std_devs, errors_sbl, marker="*")
+# ax1.legend(["KSVD", "SBL"])
+# ax1.set_title("Image Reconstruction Error")
+# ax1.set_xlabel("noise standard deviation")
+# ax1.grid()
 
 ##### Runtime Plots #####
 rt_ksvd_filename = "../data/cute_bear_ksvd_rt.npy"
@@ -86,6 +86,35 @@ ax3.set_title("Peak SNR")
 ax3.set_ylabel("dB")
 ax3.set_xlabel("noise standard deviation")
 ax3.grid()
+
+##### SSIM #####
+from skimage.metrics import structural_similarity as ssim
+
+row = 320
+col = 480
+original_img = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
+original_img = original_img[:row,:col]
+ksvd_ssim = []
+sbl_ssim = []
+for noise_level in noise_std_devs:
+    ksvdimg_filename = "../data/cute_bear_ksvd"+str(noise_level)+".jpg"
+    sblimg_filename = "../data/cute_bear_sbl"+str(noise_level)+".jpg"
+    ksvddns_img = cv2.imread(ksvdimg_filename, cv2.IMREAD_GRAYSCALE)
+    sbldns_img = cv2.imread(sblimg_filename, cv2.IMREAD_GRAYSCALE)
+    ksvd_ssim.append(ssim(original_img, ksvddns_img, data_range=255))
+    sbl_ssim.append(ssim(original_img, sbldns_img, data_range=255))
+
+fig4, ax4 = plt.subplots()
+ax4.plot(noise_std_devs, ksvd_ssim, marker="*")
+ax4.plot(noise_std_devs, sbl_ssim, marker="*")
+ax4.legend(["KSVD", "SBL"])
+ax4.set_title("Structural Similarity Index")
+# ax4.set_ylabel("dB")
+ax4.set_xlabel("noise standard deviation")
+ax4.grid()
+
+##### SSIM #####
+
 
 ##### Print dictionary #####
 method = "ksvd"
