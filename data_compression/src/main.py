@@ -6,10 +6,10 @@ from sbl import run_sbl_am
 import time
 
 ####### Configuration #######
-RUN_SBL = False
-RUN_KSVD = True
+RUN_SBL = True
+RUN_KSVD = False
 LEARN_DICT = True
-noise_std_devs = [5, 10, 15, 25]
+noise_std_devs = [5, 10]
 
 ####### Import Images #######
 img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
@@ -107,13 +107,6 @@ def get_image(tiles, overlap=False):
         img = img/no_tiles
     return np.clip(img, 0, 255).astype(np.uint8)
 
-def image_error(orig_img, new_img):
-    row, col = new_img.shape
-    orig_img = orig_img[:row,:col] 
-    error = np.linalg.norm(new_img-orig_img)/(row*col)
-    return error
-
-
 img1_ns_tiles = []
 N=3000
 yNs = []
@@ -166,10 +159,16 @@ if LEARN_DICT:
             mu, A = run_sbl_am(sigma2=noise_std_devs[idx], Y=yN, num_atoms=dict_size)
             run_time = time.time()-start_time
             run_times.append(run_time)
-        As.append(A)
+            As.append(A)
     runtime_filename = "../data/cute_bear_"+method+"_rt.npy"
+    # Save the runtimes and dictionaries 
     with open(runtime_filename, 'wb') as f:
         np.save(f, run_times)
+    for idx, img1_noisy in enumerate(img1_ns):
+        tol = noise_std_devs[idx] 
+        dict_filename = "../data/cute_bear_dict_"+method+str(tol)+".npy"
+        with open(dict_filename, 'wb') as f:
+            np.save(f, As[idx])
 else:
     if RUN_KSVD:
         method = "ksvd"
@@ -196,14 +195,5 @@ for idx, img1_noisy in enumerate(img1_ns):
     xK,_ = ksvd.sparse_coding(As[idx],np.array(img1_tiles).T, tol=tol)
     img1_dns_tiles = As[idx]@xK
     img1_dns = get_image(np.transpose(img1_dns_tiles), overlap=True)
-    img_error = image_error(img1, img1_dns)
-    image_errors.append(img_error)
     img_filename = "../data/cute_bear_"+method+str(tol)+".jpg"
-    dict_filename = "../data/cute_bear_dict_"+method+str(tol)+".npy"
     cv2.imwrite(img_filename, img1_dns)
-    with open(dict_filename, 'wb') as f:
-        np.save(f, As[idx])
-
-error_filename = "../data/cute_bear_"+method+"_errors.npy"
-with open(error_filename, 'wb') as f:
-    np.save(f, image_errors)
