@@ -9,7 +9,7 @@ import time
 RUN_SBL = True
 RUN_KSVD = False
 LEARN_DICT = True
-noise_std_devs = [5, 10]
+noise_std_devs = [10]
 
 ####### Import Images #######
 img1 = cv2.imread("../data/cute_bear.jpg", cv2.IMREAD_GRAYSCALE)
